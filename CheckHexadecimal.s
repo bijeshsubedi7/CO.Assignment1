@@ -1,6 +1,6 @@
 # The data section of the code
 .data
-	inputMessage: .asciiz "Enter a hexadecimal number"    	# Storing the string as inputMessage
+	inputMessage: .asciiz "Enter a hexadecimal number: "    	# Storing the string as inputMessage
 	userInput: .space 9					# Storing the 
 	newLine: .asciiz "\n"					# A newline character
 	
@@ -19,8 +19,31 @@
 			
 		li $v0, 4		# Preparing the register to display a character
 		la $a0, newLine		# loading the string newline into the argument dictionary
-		syscall			# Making the system call output to the string
+		syscall
+					
+		la $t1, userInput
 		
+		li $t0, 8		# Counter for the loop
+	loop:
+		lb $t2, ($t1)		# Loading the first byte $t1 is pointing to
 		
-	li $v0, 10			# Preparing the register to exit
-	syscall				# Making the exit call
+		## THIS IS WHERE WE CALL THE FUNCTION TO CHECK IF EACH CHAR STORED IN $T2 IS A HEX-BIT ##
+		
+		# printing the character $t2 is pointing to just for testing purposes.
+		li $v0, 11
+		la $a0, ($t2)
+		syscall
+		
+		# Printing the new line
+		li $v0, 4
+		la $a0, newLine
+		syscall
+		
+		addu $t1, $t1, 1		# Adding one to the value
+		
+		subi $t0, $t0, 1 	# Decreasing the counter value
+		beqz $t0, exitLoop	# If the value in $t0 is equal to 0 exit the loop
+		b loop			# Continue the loop
+	exitLoop:		
+		li $v0, 10		# Preparing the register to exit
+		syscall			# Making the exit call
