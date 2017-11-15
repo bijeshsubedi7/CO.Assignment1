@@ -32,23 +32,32 @@
 	loop:
 		lb $t2, ($t1)		# Loading the first byte $t1 is pointing to
 		
-		li $v0, 11
-		la $a0, ($t2)
-		syscall
-		
 		# Preparing the arguments and calling the fucntion checkChar
 		la $a0, ($t2)		# Passing the argument
 		jal checkChar		# Calling the function
+		beq $v0, 0, invalidInput		# If the condition doesn't satisfy we go to the end of the program
 		
-		la $t3, ($v0)			# temporarily storing the return addresss in $t3 register
-		beq $t3, 0, invalidInput		# If the condition doesn't satisfy we go to the end of the program
+		# converting the character to integer
+		la $a1, ($t2) 		# loading the arguements
+		jal charToInteger	# callilng the function to call the argument
+		la $t5, ($v1)		# loading the return value into thhe $t5
+		
+		#printing the integer
+		li $v0, 1
+		la $a0, ($t5)
+		syscall
+		
+		li $v0, 4		# Preparing the register to display a character
+		la $a0, newLine		# loading the string newline into the argument dictionary
+		syscall
+		
 		
 		addi $t4, $t4, 1		# Increasing the value of the power fo the hexadecimal base
 		
 		subu $t1, $t1, 1		# Adding one to the value
 		subi $t0, $t0, 1 	# Decreasing the counter value
 		beq $t0, 0, exitLoop	# If the value in $t0 is equal to 0 exit the loop
-		b loop			# Continue the loop
+		b loop		# Continue the loop
 	exitLoop:
 		li $v0, 1
 		la $a0, ($s0)
@@ -105,5 +114,29 @@
 			b loop				# going back to the top
 		exit:
 		la $v1, ($t5)				# storing the result of the multiplication in $v1 to return 
-		jr $ra					# going back to the original address
+		jr $ra	
+						# going back to the original address
+
+
+	charToInteger:
+		slti $t8, $a1, 59
+		beq $t8, 1, numbers
+		
+		slti $t8, $a1, 71
+		beq $t8, 1, capital
+		
+		slti $t8, $a1, 103
+		beq $t8, 1, small
+		
+		numbers:
+			subi $v1, $a1, 48
+			b exitCharToInteger 
+		capital:
+			subi $v1, $a1, 55
+			b exitCharToInteger 
+		small:
+			subi $v1, $a1, 87
+			b exitCharToInteger 
+		exitCharToInteger:
+			jr $ra
 		
