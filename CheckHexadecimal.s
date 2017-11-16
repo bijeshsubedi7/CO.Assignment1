@@ -20,22 +20,31 @@ main:
   	li $a1, 9			# Specifying the size of the input
   	syscall
   	
-  	jal printNewLine
-  	
   	# Pointing to the last byte of the input
   	la   $s0, userInput		# making s0 point to the first byte
   	
+  	# If the input is only the return value then the input is invalid
+  	
+  	lb $t0, ($s0)
+  	beq $t0, 10, invalidInput
   	# Creating some variables
   	li $s1, 0			# variable to store the converted decimal value
   	li $t0, 1			# variable to store the power
   	li $t1, 8			# The counter for the loop
-  
+  	li $t3, 0			# First Char Found is set to false
+  	li $t4, 0			# Char after space is set to false
+  	li $t5, 0			# The number of space
+  	
   	loop:
   		# loading the value pointed by $s0
   		lb $t2, ($s0)		# $t2 now stores byte pointed by $s0	
   		
   		beq $t2, 10, exitLoop
   		beq $t2, 32, skip
+  		# if the character is not space
+		li $t3, 1  			# First char found is now set to true
+		beq $t3, $t4, invalidInput	# If a valid char is found after space then the input is invalid
+		
   		# calling the function to check if the char is valid
   		la  $a0, ($t2)			# passing $t2 as an argument
   		jal checkChar			# calling the function, return value in $v1
@@ -51,11 +60,17 @@ main:
 		
 		# Loop and the character related operations
 		skip:
+		jal space
 		addu $s0, $s0, 1		# s0 now points to the next char 
 		addi $t1, $t1, -1	# decreasing the value of the counter
 		beq  $t1, 0, exitLoop
 		b    loop
 	exitLoop:
+	# checking if the input was all spaces
+	addi $t1, $t1, -8
+	sub $t1, $0, $t1
+	beq $t5, $t1, invalidInput
+	
 	# If the loops executes successfully we check if the resulting number is negative
 	addi $t0, $0, 10			# loading the value 10 into $t0
 	divu $s1, $t0
@@ -82,17 +97,6 @@ main:
 		
 		li $v0, 10
 		syscall
-	
-		  		
-printNewLine:
-# Function to print a new line
-# Requires no argument or return value
-	li $v0, 4			# About to print a character
-	la $a0, newLine			# Loading the character to be printed
-	syscall				# making the system call
-	
-	jr $ra				# returning to the called address
-
 
 checkChar:
 # Function to check if the character is valid
@@ -147,4 +151,12 @@ charToInteger:
 	small:
 		addi $v1, $a0, -87	# subtract 87 from the small letters to get the decimal value
 	exitCharToInteger:
+	jr $ra
+	
+space:
+#increase the count of space and 
+	bne $t2, 32, exitSpace
+	seq $t4, $t3, 1
+	addi $t5, $t5, 1
+	exitSpace:
 	jr $ra
